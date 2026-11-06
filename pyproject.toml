@@ -1,0 +1,18 @@
+[project]
+name = "file-sharing"
+version = "1.0.0"
+description = "Simple file sharing platform for classrooms"
+requires-python = ">=3.9"
+
+dependencies = [
+    "flask>=3.0.0",
+    "werkzeug>=3.0.0",
+    "pdf2image>=1.16.0",
+    "pypdf>=3.0.0",
+    "Pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]

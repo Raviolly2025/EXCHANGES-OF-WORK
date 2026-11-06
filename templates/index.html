@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t.site_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Переключатель языка -->
+        <div class="language-switcher">
+            <span>🌐 {{ t.language }}:</span>
+            {% for l in languages %}
+            <a href="/set-lang/{{ l }}" class="lang-btn {% if l == lang %}active{% endif %}">
+                {% if l == 'id' %}🇮🇩{% elif l == 'ru' %}🇷🇺{% elif l == 'en' %}🇬🇧{% elif l == 'es' %}🇪🇸{% endif %}
+            </a>
+            {% endfor %}
+        </div>
+
+        <header>
+            <h1>📊 {{ t.site_title }}</h1>
+            <p class="subtitle">{{ t.site_subtitle }}</p>
+        </header>
+
+        {% if error %}
+        <div class="error-message">
+            ⚠️ {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="cards">
+            <!-- Создание комнаты -->
+            <div class="card">
+                <h2>🏫 {{ t.create_room }}</h2>
+                <p>{{ t.create_room_desc }}</p>
+                <form action="/create-room" method="POST">
+                    <input type="text" name="room_name" placeholder="{{ t.lesson_name }}" required>
+                    <button type="submit" class="btn btn-primary">{{ t.create_room_btn }}</button>
+                </form>
+            </div>
+
+            <!-- Вход в комнату -->
+            <div class="card">
+                <h2>🚪 {{ t.join_room }}</h2>
+                <p>{{ t.join_room_desc }}</p>
+                <form action="/join-room" method="POST">
+                    <input type="text" name="room_code" placeholder="{{ t.room_code }}" 
+                           maxlength="12" required>
+                    <button type="submit" class="btn btn-secondary">{{ t.join_btn }}</button>
+                </form>
+            </div>
+        </div>
+
+        {% if is_admin %}
+        <div class="admin-badge">
+            <a href="/admin">🔐 {{ t.admin_panel }}</a>
+        </div>
+        {% endif %}
+
+        <footer>
+            <p>{{ t.footer_text }}</p>
+        </footer>
+    </div>
+</body>
+</html>

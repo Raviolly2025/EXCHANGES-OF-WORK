@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ room.name }} | {{ room_code }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* ============ ПОРТФОЛИО СТИЛИ ============ */
+        
+        .portfolios-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .portfolio-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .portfolio-card:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+        
+        .portfolio-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .portfolio-header:hover {
+            filter: brightness(1.05);
+        }
+        
+        .portfolio-author-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .portfolio-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .portfolio-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .portfolio-stats {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .portfolio-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .portfolio-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .portfolio-toggle-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .portfolio-card.expanded .portfolio-toggle-icon {
+            transform: rotate(180deg);
+        }
+        
+        /* Мини-превью в заголовке */
+        .portfolio-mini-previews {
+            display: flex;
+            gap: 4px;
+            margin-left: 16px;
+        }
+        
+        .portfolio-mini-previews img {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        /* Содержимое портфолио */
+        .portfolio-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        
+        .portfolio-card.expanded .portfolio-content {
+            max-height: 2000px;
+        }
+        
+        .portfolio-files {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            background: #f8f9fa;
+        }
+        
+        /* Карточка файла внутри портфолио */
+        .file-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .file-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .file-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .file-type-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .file-type-icon.presentation { background: #fff3e0; }
+        .file-type-icon.document { background: #e3f2fd; }
+        .file-type-icon.image { background: #f3e5f5; }
+        
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #333;
+        }
+        
+        .file-meta {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 2px;
+        }
+        
+        /* Превью файла */
+        .file-previews {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        
+        .file-previews img {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .file-previews img:hover {
+            transform: scale(1.05);
+        }
+        
+        .file-previews .more-count {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eee;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .file-no-preview {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            color: #999;
+            margin-bottom: 12px;
+        }
+        
+        .file-no-preview span {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        /* Действия с файлом */
+        .file-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .file-actions .btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+        
+        /* Редактирование автора */
+        .portfolio-edit-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .portfolio-edit-form input {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 200px;
+        }
+        
+        .portfolio-edit-form input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .portfolio-edit-form button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+            color: white;
+            transition: background 0.2s;
+        }
+        
+        .portfolio-edit-form button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* Кнопка удаления в карточке файла */
+        .file-delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 14px;
+        }
+        
+        .file-card:hover .file-delete-btn {
+            opacity: 1;
+        }
+        
+        /* Адаптив */
+        @media (max-width: 600px) {
+            .portfolio-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            
+            .portfolio-mini-previews {
+                display: none;
+            }
+            
+            .portfolio-files {
+                grid-template-columns: 1fr;
+            }
+            
+            .file-previews {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        /* Поле ввода имени автора */
+        .author-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .author-input-wrapper input {
+            flex: 1;
+            padding: 12px 40px 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        .author-input-wrapper input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .author-input-wrapper input.saved {
+            background: #f0f8ff;
+            border-color: #667eea;
+        }
+        
+        .author-input-wrapper input.saved:not(:focus) {
+            color: #333;
+        }
+        
+        .author-edit-btn {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+            padding: 4px;
+        }
+        
+        .author-edit-btn:hover {
+            opacity: 1;
+        }
+        
+        .author-greeting {
+            font-size: 0.85rem;
+            color: #667eea;
+            margin-top: 4px;
+            display: none;
+        }
+        
+        .author-greeting.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Переключатель языка -->
+        <div class="language-switcher">
+            <span>🌐 {{ t.language }}:</span>
+            {% for l in languages %}
+            <a href="/set-lang/{{ l }}" class="lang-btn {% if l == lang %}active{% endif %}">
+                {% if l == 'id' %}🇮🇩{% elif l == 'ru' %}🇷🇺{% elif l == 'en' %}🇬🇧{% elif l == 'es' %}🇪🇸{% endif %}
+            </a>
+            {% endfor %}
+        </div>
+
+        <header>
+            <a href="/" class="back-link">{{ t.back_to_main }}</a>
+            <h1>{{ room.name }}</h1>
+            <div class="room-code-display">
+                {{ t.room_code }}: <span class="code">{{ room_code }}</span>
+            </div>
+        </header>
+
+        <!-- Форма загрузки -->
+        <div class="upload-section">
+            <h2>📤 {{ t.upload_file }}</h2>
+            <form action="/upload/{{ room_code }}" method="POST" enctype="multipart/form-data" class="upload-form" id="upload-form">
+                <div class="form-row">
+                    <div class="author-input-wrapper">
+                        <input type="text" name="author" id="author-input" placeholder="{{ t.your_name }}" required>
+                        <button type="button" class="author-edit-btn" id="author-edit-btn" title="Изменить имя" style="display: none;">✏️</button>
+                    </div>
+                    <label class="file-input-label">
+                        <input type="file" name="file" accept=".pptx,.pdf,.docx,.png,.jpg,.jpeg,.gif,.bmp,.webp" required id="file-input">
+                        <span class="file-btn">📎 {{ t.choose_file }}</span>
+                        <span class="file-name" id="file-name">{{ t.file_not_selected }}</span>
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary">{{ t.upload_btn }}</button>
+            </form>
+            <p class="formats-hint">{{ t.allowed_formats }}</p>
+        </div>
+
+        <!-- Уведомление о новых работах -->
+        <div id="update-notification" class="update-notification" style="display: none;">
+            <span>🆕 {{ t.new_works }}</span>
+            <button onclick="location.reload()" class="btn btn-small btn-primary">{{ t.refresh }}</button>
+        </div>
+
+        <!-- Список портфолио -->
+        <div class="presentations-section">
+            <h2>📚 {{ t.class_works }} (<span id="pres-count">{{ presentations|length }}</span> {{ t.files }})</h2>
+            
+            {% if portfolios %}
+            <div class="portfolios-grid" id="portfolios-grid">
+                {% for author, files in portfolios.items() %}
+                <div class="portfolio-card" data-author="{{ author }}">
+                    <div class="portfolio-header" onclick="togglePortfolio(this)">
+                        <div class="portfolio-author-info">
+                            <div class="portfolio-avatar">{{ author[0] if author else '?' }}</div>
+                            <div>
+                                {% if can_edit %}
+                                <form action="/room/{{ room_code }}/rename-author" method="POST" class="portfolio-edit-form" onclick="event.stopPropagation()">
+                                    <input type="hidden" name="old_author" value="{{ author }}">
+                                    <input type="text" name="new_author" value="{{ author }}" onclick="event.stopPropagation()">
+                                    <button type="submit" title="Save">💾</button>
+                                </form>
+                                {% else %}
+                                <h3 class="portfolio-name">{{ author }}</h3>
+                                {% endif %}
+                                <div class="portfolio-stats">
+                                    <span class="portfolio-stat">📁 {{ files|length }} {{ t.files }}</span>
+                                    <span class="portfolio-stat">🖼️ {% set img_count = namespace(value=0) %}{% for f in files %}{% set img_count.value = img_count.value + f.images|length %}{% endfor %}{{ img_count.value }} {{ t.images }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Мини-превью -->
+                        <div class="portfolio-mini-previews">
+                            {% for file in files[:3] %}
+                                {% if file.images %}
+                                <img src="{{ url_for('static', filename=file.images[0]) }}" alt="">
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="portfolio-toggle">
+                            <span class="portfolio-toggle-icon">▼</span>
+                        </div>
+                    </div>
+                    
+                    <div class="portfolio-content">
+                        <div class="portfolio-files">
+                            {% for file in files %}
+                            <div class="file-card" data-id="{{ file.id }}">
+                                {% if can_edit %}
+                                <form action="/room/{{ room_code }}/delete/{{ file.id }}" method="POST" style="display:inline">
+                                    <button type="submit" class="file-delete-btn" onclick="return confirm('{{ t.delete_confirm }}')">✕</button>
+                                </form>
+                                {% endif %}
+                                
+                                <div class="file-card-header">
+                                    <div class="file-type-icon {{ file.file_type }}">
+                                        {% if file.file_type == 'presentation' %}📊
+                                        {% elif file.file_type == 'document' %}📄
+                                        {% elif file.file_type == 'image' %}🖼️
+                                        {% else %}📎{% endif %}
+                                    </div>
+                                    <div class="file-info">
+                                        <div class="file-name" title="{{ file.filename }}">{{ file.filename }}</div>
+                                        <div class="file-meta">
+                                            {% if file.file_type == 'presentation' %}{{ t.file_type_presentation }}
+                                            {% elif file.file_type == 'document' %}{{ t.file_type_document }}
+                                            {% elif file.file_type == 'image' %}{{ t.file_type_image }}
+                                            {% endif %}
+                                            {% if file.images %} • {{ file.images|length }} {{ t.images }}{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if file.images %}
+                                <div class="file-previews">
+                                    {% for image in file.images[:5] %}
+                                    <img src="{{ url_for('static', filename=image) }}" 
+                                         alt="Preview" 
+                                         onclick="openModal('{{ url_for('static', filename=image) }}')">
+                                    {% endfor %}
+                                    {% if file.images|length > 5 %}
+                                    <div class="more-count" onclick="openGallery('{{ file.id }}')">+{{ file.images|length - 5 }}</div>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <div class="file-no-preview">
+                                    <span>📄</span>
+                                    <small>{{ t.no_preview }}</small>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="file-actions">
+                                    <a href="/download/{{ file.id }}" class="btn btn-download">⬇️ {{ t.download }}</a>
+                                    {% if file.images %}
+                                    <button class="btn btn-preview" onclick="openGallery('{{ file.id }}')">🖼️</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state" id="empty-state">
+                <span class="empty-icon">📭</span>
+                <p>{{ t.no_files }}</p>
+                <p class="hint">{{ t.be_first }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Кнопка админа/учителя в углу -->
+        <div class="admin-corner">
+            {% if can_edit %}
+            <div class="admin-active {% if is_teacher %}teacher-mode{% endif %}">
+                {% if is_admin %}
+                <span>🔓 {{ t.admin_mode }}</span>
+                <a href="/admin" class="btn btn-small">{{ t.panel }}</a>
+                {% else %}
+                <span>👨‍🏫 {{ t.teacher_mode }}</span>
+                {% endif %}
+                <button onclick="logoutAdmin()" class="btn btn-small">{{ t.exit }}</button>
+            </div>
+            {% else %}
+            <button onclick="showAdminModal()" class="admin-toggle-btn" title="{{ t.teacher_mode }}">
+                🔐
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Модальное окно для ввода секретного кода -->
+    <div id="adminModal" class="modal admin-modal">
+        <div class="admin-modal-content">
+            <span class="modal-close" onclick="closeAdminModal()">&times;</span>
+            <h3>🔐 {{ t.management_mode }}</h3>
+            <p>{{ t.enter_code }}</p>
+            <input type="password" id="admin-code-input" placeholder="{{ t.room_code }}" maxlength="15">
+            <div id="admin-error" class="error-text" style="display: none;">{{ t.wrong_code }}</div>
+            <button onclick="checkAdminCode()" class="btn btn-primary">{{ t.login }}</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно для просмотра картинки -->
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <span class="modal-close">&times;</span>
+        <img id="modalImage" class="modal-content">
+    </div>
+
+    <!-- Галерея картинок -->
+    <div id="galleryModal" class="modal gallery-modal">
+        <span class="modal-close" onclick="closeGallery()">&times;</span>
+        <div class="gallery-container" id="galleryContainer"></div>
+    </div>
+
+    <!-- Данные о файлах для JS -->
+    <script>
+        const filesData = {
+            {% for pres in presentations %}
+            '{{ pres.id }}': {{ pres.images | tojson }},
+            {% endfor %}
+        };
+        
+        const roomCode = '{{ room_code }}';
+        let currentCount = {{ presentations|length }};
+        const fileNotSelected = '{{ t.file_not_selected }}';
+    </script>
+
+    <script>
+        // ============ ПОРТФОЛИО ============
+        
+        function togglePortfolio(header) {
+            const card = header.closest('.portfolio-card');
+            card.classList.toggle('expanded');
+        }
+        
+        // Автоматически раскрываем первое портфолио
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstPortfolio = document.querySelector('.portfolio-card');
+            if (firstPortfolio) {
+                firstPortfolio.classList.add('expanded');
+            }
+        });
+        
+        // ============ АВТООБНОВЛЕНИЕ ============
+        
+        function checkForUpdates() {
+            fetch(`/api/room/${roomCode}/count`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.count > currentCount) {
+                        document.getElementById('update-notification').style.display = 'flex';
+                        document.getElementById('pres-count').textContent = data.count;
+                    } else if (data.count < currentCount) {
+                        location.reload();
+                    }
+                })
+                .catch(err => console.log('Error checking updates:', err));
+        }
+        
+        setInterval(checkForUpdates, 5000);
+        
+        // ============ ЗАГРУЗКА ФАЙЛА ============
+        
+        document.getElementById('file-input').addEventListener('change', function() {
+            const fileName = this.files[0] ? this.files[0].name : fileNotSelected;
+            document.getElementById('file-name').textContent = fileName;
+        });
+        
+        // ============ ЗАПОМИНАНИЕ ИМЕНИ ============
+        
+        const authorInput = document.getElementById('author-input');
+        const authorEditBtn = document.getElementById('author-edit-btn');
+        const savedAuthorKey = 'file-sharing-author-name';
+        
+        // Загружаем сохранённое имя при загрузке страницы
+        function loadSavedAuthor() {
+            const savedName = localStorage.getItem(savedAuthorKey);
+            if (savedName) {
+                authorInput.value = savedName;
+                authorInput.classList.add('saved');
+                authorEditBtn.style.display = 'block';
+            }
+        }
+        
+        // Сохраняем имя при отправке формы
+        document.getElementById('upload-form').addEventListener('submit', function() {
+            const name = authorInput.value.trim();
+            if (name) {
+                localStorage.setItem(savedAuthorKey, name);
+            }
+        });
+        
+        // Кнопка редактирования - фокус на поле и выделение текста
+        authorEditBtn.addEventListener('click', function() {
+            authorInput.focus();
+            authorInput.select();
+        });
+        
+        // При изменении имени обновляем статус
+        authorInput.addEventListener('input', function() {
+            const savedName = localStorage.getItem(savedAuthorKey);
+            if (this.value.trim() !== savedName) {
+                this.classList.remove('saved');
+            } else if (savedName) {
+                this.classList.add('saved');
+            }
+        });
+        
+        // Загружаем имя при старте
+        loadSavedAuthor();
+
+        // ============ ПРОСМОТР КАРТИНОК ============
+        
+        function openModal(src) {
+            event.stopPropagation();
+            document.getElementById('modalImage').src = src;
+            document.getElementById('imageModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+
+        function openGallery(fileId) {
+            const images = filesData[fileId] || [];
+            const container = document.getElementById('galleryContainer');
+            container.innerHTML = '';
+            
+            images.forEach(img => {
+                const imgEl = document.createElement('img');
+                imgEl.src = '/static/' + img;
+                imgEl.onclick = function(e) {
+                    e.stopPropagation();
+                    openModal('/static/' + img);
+                };
+                container.appendChild(imgEl);
+            });
+            
+            document.getElementById('galleryModal').classList.add('active');
+        }
+
+        function closeGallery() {
+            document.getElementById('galleryModal').classList.remove('active');
+        }
+
+        // ============ АДМИН-РЕЖИМ ============
+        
+        function showAdminModal() {
+            document.getElementById('adminModal').classList.add('active');
+            document.getElementById('admin-code-input').focus();
+        }
+        
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.remove('active');
+            document.getElementById('admin-code-input').value = '';
+            document.getElementById('admin-error').style.display = 'none';
+        }
+        
+        function checkAdminCode() {
+            const code = document.getElementById('admin-code-input').value;
+            
+            fetch('/api/check-admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code, room_code: roomCode })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    document.getElementById('admin-error').style.display = 'block';
+                    document.getElementById('admin-code-input').value = '';
+                }
+            });
+        }
+        
+        function logoutAdmin() {
+            fetch('/api/admin-logout', { method: 'POST' })
+                .then(() => location.reload());
+        }
+        
+        document.getElementById('admin-code-input')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkAdminCode();
+        });
+
+        // ============ КЛАВИАТУРА ============
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeGallery();
+                closeAdminModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t.admin_panel }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container admin-page">
+        <!-- Переключатель языка -->
+        <div class="language-switcher">
+            <span>🌐 {{ t.language }}:</span>
+            {% for l in languages %}
+            <a href="/set-lang/{{ l }}" class="lang-btn {% if l == lang %}active{% endif %}">
+                {% if l == 'id' %}🇮🇩{% elif l == 'ru' %}🇷🇺{% elif l == 'en' %}🇬🇧{% elif l == 'es' %}🇪🇸{% endif %}
+            </a>
+            {% endfor %}
+        </div>
+
+        <header>
+            <a href="/" class="back-link">{{ t.back_to_main }}</a>
+            <h1>🔐 {{ t.admin_panel }}</h1>
+            <a href="/admin/logout" class="logout-btn">{{ t.logout_admin }}</a>
+        </header>
+
+        <!-- Статистика -->
+        <div class="stats-bar">
+            <div class="stat">
+                <span class="stat-value">{{ data.rooms|length }}</span>
+                <span class="stat-label">{{ t.rooms }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value">{{ data.presentations|length }}</span>
+                <span class="stat-label">{{ t.files }}</span>
+            </div>
+        </div>
+
+        <!-- Комнаты -->
+        <section class="admin-section">
+            <h2>🏫 {{ t.rooms }}</h2>
+            
+            {% if data.rooms %}
+            <div class="admin-list">
+                {% for code, room in data.rooms.items() %}
+                <div class="admin-item room-item">
+                    <div class="item-info">
+                        <span class="item-code">{{ code }}</span>
+                        <span class="item-name">{{ room.name }}</span>
+                        <span class="item-count">{{ room.presentations|length }} {{ t.files|lower }}</span>
+                    </div>
+                    <div class="item-actions">
+                        <a href="/room/{{ code }}" class="btn btn-small">{{ t.open }}</a>
+                        <form action="/admin/delete-room/{{ code }}" method="POST" 
+                              onsubmit="return confirm('{{ t.delete_room_confirm }}')">
+                            <button type="submit" class="btn btn-small btn-danger">{{ t.delete }}</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-text">{{ t.no_rooms }}</p>
+            {% endif %}
+        </section>
+
+        <!-- Файлы -->
+        <section class="admin-section">
+            <h2>📁 {{ t.files }}</h2>
+            
+            {% if data.presentations %}
+            <div class="admin-list">
+                {% for pres_id, pres in data.presentations.items() %}
+                <div class="admin-item presentation-item">
+                    <div class="item-info">
+                        <span class="item-id">{{ pres_id }}</span>
+                        <form action="/admin/edit-author/{{ pres_id }}" method="POST" class="edit-author-form">
+                            <input type="text" name="author" value="{{ pres.author }}" class="author-input">
+                            <button type="submit" class="btn btn-tiny">💾</button>
+                        </form>
+                        <span class="item-filename">{{ pres.filename }}</span>
+                        <span class="item-images">{{ pres.images|length }} {{ t.images }}</span>
+                    </div>
+                    <div class="item-actions">
+                        <a href="/download/{{ pres_id }}" class="btn btn-small">{{ t.download }}</a>
+                        <form action="/admin/delete-presentation/{{ pres_id }}" method="POST"
+                              onsubmit="return confirm('{{ t.delete_confirm }}')">
+                            <button type="submit" class="btn btn-small btn-danger">{{ t.delete }}</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-text">{{ t.no_files_admin }}</p>
+            {% endif %}
+        </section>
+    </div>
+</body>
+</html>
